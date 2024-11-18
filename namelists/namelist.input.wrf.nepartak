@@ -22,14 +22,14 @@
  io_form_restart                     = 2
  io_form_input                       = 2
  io_form_boundary                    = 2
-! iofields_filename                   = "var_extra_output", "var_extra_output", "var_extra_output"
+ iofields_filename                   = "var_extra_output", "var_extra_output", "var_extra_output"
  ignore_iofields_warning             = .true.,
  io_form_auxinput4                   = 2
  auxinput4_inname                    = wrflowinp_d<domain>
  auxinput4_interval                  = 60, 60, 60,
-! io_form_auxinput2 = 2,
-! auxhist7_outname    = "hfout_d<domain>_<date>"
-! auxhist7_interval   = 5,
+ io_form_auxinput2 = 2,
+ auxhist7_outname    = "hfout_d<domain>_<date>"
+ auxhist7_interval   = 5,
  /
 
  &domains
