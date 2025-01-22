@@ -1,0 +1,41 @@
+&share
+ wrf_core             = 'ARW'
+ max_dom              = 2
+ start_date           = '2016-07-01_00:00:00', '2016-07-01_00:00:00'
+ end_date             = '2016-07-08_18:00:00', '2016-07-08_18:00:00'
+ interval_seconds     = 21600
+ io_form_geogrid      = 2
+ debug_level          = 0
+/
+
+&geogrid
+ parent_id            = 1, 1
+ parent_grid_ratio    = 1, 5
+ i_parent_start       = 1, 314
+ j_parent_start       = 1, 222
+ e_we                 = 1260, 3301
+ e_sn                 = 1044, 2151
+ geog_data_res        = 'default', 'default'
+ dx                   = 5000
+ dy                   = 5000
+ map_proj             = 'mercator'
+ ref_lat              = 16.420
+ ref_lon              = 137.459
+ truelat1             = 8.568
+ pole_lat             = 90
+ pole_lon             = 0
+ geog_data_path       = '/glade/work/ihtam/wrf-stuff/shared/WPS_GEOG/'
+ opt_geogrid_tbl_path = './geogrid/'
+/
+
+&ungrib
+ out_format           = 'WPS'
+ prefix               = 'FILE'
+/
+
+&metgrid
+ fg_name              = 'FILE'
+ io_form_metgrid      = 2
+ opt_metgrid_tbl_path = './metgrid'
+/
+

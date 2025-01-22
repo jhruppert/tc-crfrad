@@ -1,4 +1,5 @@
-.vscode/
-WRF/
-WPS/
-__pycache__/
+.vscode
+WRF
+WPS
+tests_compiled
+__pycache__

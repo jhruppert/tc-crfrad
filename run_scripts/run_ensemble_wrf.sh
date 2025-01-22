@@ -164,9 +164,8 @@ ${mpi_command} ./real.exe
     # Remove and replace for specific test
     /bin/rm -f namelist.input
 
-    # Delete text-out from REAL
+    # Delete rsl-out from REAL
     /bin/rm -f rsl.*
-    /bin/rm -f namelist.output
 
     # In case of restart, grab new copy of corresponding namelist
     if [ ${irestart} -eq 1 ]; then
@@ -200,13 +199,8 @@ source bashrc_wrf
 # Run WRF
 ${mpi_command} ./wrf.exe
 
-# mkdir -p ../text_out
-# mkdir -p ../post
-# mkdir -p ../post/d01
-# mkdir -p ../post/d02
-# mv wrfout* wrfrst* ../
-# mv namelist.out* out_wrf.* ../text_out/
-# cp namelist.input ../text_out/
+mkdir -p rsl_out
+mv rsl.* rsl_out/
 # if [[ ${test_name} == 'ctl' ]]; then
 #   mv wrfinput* wrfbdy* wrflow* ../
 # fi

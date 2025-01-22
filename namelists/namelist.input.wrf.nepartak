@@ -9,8 +9,8 @@
  end_month                           = 09, 09, 09,
  end_day                             = 01, 01, 01,
  end_hour                            = 18, 18, 18,
- start_minute                        = 00, 00, 00,
- start_second                        = 00, 00, 00,
+ end_minute                          = 00, 00, 00,
+ end_second                          = 00, 00, 00,
  interval_seconds                    = 3600
  input_from_file                     = .true.,.true.,.true.,
  history_interval                    = 60, 60, 20,
