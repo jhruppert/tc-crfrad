@@ -1,7 +1,8 @@
 # 
 # Python script to download GEFS data from the AWS server.
 # 
-# For PICCOLO period, GEFS data is available on the AWS server at 0.5º resolution.
+# Data is available on the AWS from 2017 onward. For the PICCOLO period, data
+# is available on the AWS server at 0.5º resolution.
 # Forecasts go out 384 hours (16 days) with initializations every 6 hours.
 # 
 # This script takes the start date as the desired initialization date, with all
@@ -15,11 +16,11 @@ import requests
 
 ##### MAIN SETTINGS #####
 
-download_dir = '/glade/work/ruppert/wrf-piccolo/bcsics/gefs/' # Directory to save files
+download_dir = '/glade/work/ruppert/tc-crfrad/bcsics/gefs/' # Directory to save files
 
 # Start, end dates
-YYMMDDHH1 = '2024090100'
-YYMMDDHH2 = '2024090400'
+YYMMDDHH1 = '2015070400'
+YYMMDDHH2 = '2015071000'
 forecast_interval = 3 # hours
 
 # Choose number of ensemble members
