@@ -1,8 +1,8 @@
  &time_control
  start_year                          = 2016, 2016,
  start_month                         = 07, 07,
- start_day                           = 01, 03,
- start_hour                          = 00, 00,
+ start_day                           = 01, 02,
+ start_hour                          = 12, 00,
  start_minute                        = 00, 00,
  start_second                        = 00, 00,
  end_year                            = 2016, 2016,
@@ -41,8 +41,8 @@
  time_step_fract_den                 = 1,
  use_adaptive_time_step              = .true.,
  starting_time_step                  = -1
- e_we                                = 1260, 1936,
- e_sn                                = 1044, 1541,
+ e_we                                = 1233, 2511,
+ e_sn                                = 937, 1926,
  e_vert                              = 80, 80, 80,
 ! nproc_x                             = 40,
 ! nproc_y                             = 64,
@@ -57,8 +57,8 @@
  dy                                  = 5000, 1000,
  grid_id                             = 1,     2, 3,
  parent_id                           = 0,     1, 2,
- i_parent_start                      = 1,     430,
- j_parent_start                      = 1,     304,
+ i_parent_start                      = 1,     368,
+ j_parent_start                      = 1,     268,
  parent_grid_ratio                   = 1,     5, 5,
  parent_time_step_ratio              = 1,     5, 5,
  feedback                            = 1,
@@ -83,6 +83,7 @@
  sst_update                          = 1,
  sst_skin                            = 1,
  do_radar_ref                        = 1,
+ isftcflx = 1,
  /
 
  &fdda

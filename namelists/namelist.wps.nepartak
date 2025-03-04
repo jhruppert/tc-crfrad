@@ -1,9 +1,9 @@
 &share
  wrf_core             = 'ARW'
  max_dom              = 2
- start_date           = '2016-07-01_00:00:00', '2016-07-01_00:00:00'
- end_date             = '2016-07-07_12:00:00', '2016-07-07_12:00:00'
- interval_seconds     = 21600
+ start_date           = '2016-07-01_12:00:00', '2016-07-02_00:00:00'
+ end_date             = '2016-07-06_00:00:00', '2016-07-06_00:00:00'
+ interval_seconds     = 3600
  io_form_geogrid      = 2
  debug_level          = 0
 /
@@ -11,17 +11,17 @@
 &geogrid
  parent_id            = 1, 1
  parent_grid_ratio    = 1, 5
- i_parent_start       = 1, 430
- j_parent_start       = 1, 304
- e_we                 = 1260, 1936
- e_sn                 = 1044, 1541
+ i_parent_start       = 1, 368,430
+ j_parent_start       = 1, 268,304
+ e_we                 = 1233, 2511,1936
+ e_sn                 = 937, 1926,1541
  geog_data_res        = 'default', 'default'
  dx                   = 5000
  dy                   = 5000
  map_proj             = 'mercator'
- ref_lat              = 16.420
- ref_lon              = 137.459
- truelat1             = 8.568
+ ref_lat              = 13.988
+ ref_lon              = 137.546
+ truelat1             = 8.484
  pole_lat             = 90
  pole_lon             = 0
  geog_data_path       = '/glade/work/ruppert/WPS_GEOG/'

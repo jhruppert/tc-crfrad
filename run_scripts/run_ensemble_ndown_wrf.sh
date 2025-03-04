@@ -39,16 +39,17 @@
 
 # Selection to run the different stages of REAL, NDOWN, WRF
 # ...which should go in the order as listed
-# stage="real1" # Run real for coarse domain
+stage="real1" # Run real for coarse domain
 # stage="wrf1" # Run wrf for coarse domain
 # stage="real2" # Get new ICs in prep for ndown
   # -- can run real2 concurrently with wrf1
 # stage="real3" # Run ndown to prepare fine domain
 # stage="wrf2" # Run wrf for fine domain
-stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
+# stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
 
 # Select case name
 case_name="nepartak"
+# case_name="nangka"
 
 # Select test (e.g., "ctl", "ncrf", etc.)
 test_name="ctl"
@@ -65,11 +66,12 @@ wrf_compiled="ctl"
 nens=1
 
 # NDOWN inner neest start time
-ndown_t_stamp_start="2016-07-03_00:00:00"
+ndown_t_stamp_start="2016-07-01_00:00:00"
+# ndown_t_stamp_start="2015-07-04_00:00:00"
 
 # Restart
-restart_t_stamp_start="2016-07-04_18:00:00"
-restart_t_stamp_end="2016-07-06_00:00:00"
+# restart_t_stamp_start="2015-07-04_18:00:00"
+# restart_t_stamp_end="2015-07-06_00:00:00"
 
 ###################################################
 # Import functions
@@ -108,18 +110,18 @@ restart_t_stamp_end="2016-07-06_00:00:00"
 ###################################################
 # Case-specific WRF job settings
 
-  if [[ ${case_name} == 'nepartak' ]]; then
+  # if [[ ${case_name} == 'nepartak' ]]; then
   # CTL job settings
-    if [[ $stage == *"real"* ]]; then
-      run_time='02:00' # HH:MM Job run time
-    elif [[ $stage == *"wrf"* ]]; then
-      run_time='12:00' # HH:MM Job run time
-    fi
-    # Mechanism-denial tests
-    if [[ ${test_name} == *"crf"* ]]; then
-      run_time='12:00' # HH:MM Job run time
-    fi
+  if [[ $stage == *"real"* ]]; then
+    run_time='02:00' # HH:MM Job run time
+  elif [[ $stage == *"wrf"* ]]; then
+    run_time='12:00' # HH:MM Job run time
   fi
+  # Mechanism-denial tests
+  if [[ ${test_name} == *"crf"* ]]; then
+    run_time='12:00' # HH:MM Job run time
+  fi
+  # fi
 
 ###################################################
 # Set working subdirectory "wrf_dir"
@@ -308,7 +310,7 @@ mv rsl.* rsl_out/" >> batch_wrf_${test_name}.job
 
     # Submit WRF job
     # if [[ `grep SUCCESS rsl.error.0000 | wc -l` -eq 0 ]] then
-      # ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
+      ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
     # fi
     # tail submit_wrf_out.txt
 

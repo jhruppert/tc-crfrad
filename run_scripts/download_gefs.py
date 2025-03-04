@@ -5,6 +5,8 @@
 # is available on the AWS server at 0.5º resolution.
 # Forecasts go out 384 hours (16 days) with initializations every 6 hours.
 # 
+# See https://github.com/awslabs/open-data-docs/tree/main/docs/noaa/noaa-gefs-pds
+# 
 # This script takes the start date as the desired initialization date, with all
 # data coming from that forecast.
 # 
