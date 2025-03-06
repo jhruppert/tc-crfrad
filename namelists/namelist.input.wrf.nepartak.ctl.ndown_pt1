@@ -11,7 +11,7 @@
  end_hour                            = 00, 00,
  end_minute                          = 00, 00,
  end_second                          = 00, 00,
- interval_seconds                    = 21600
+ interval_seconds                    = 3600
  input_from_file                     = .true.,.true.,
  history_interval                    = 60, 20,
  frames_per_outfile                  = 24, 72,
@@ -51,7 +51,7 @@
  max_dz                              = 500,
  dzbot                               = 50,
  p_top_requested                     = 1200,
- num_metgrid_levels                  = 32,
+ num_metgrid_levels                  = 38,
  num_metgrid_soil_levels             = 4,
  dx                                  = 5000, 1000,
  dy                                  = 5000, 1000,
@@ -89,7 +89,7 @@
  &fdda
  grid_fdda                           =   1,
  gfdda_inname                        = "wrffdda_d<domain>",
- gfdda_interval_m                    = 360,
+ gfdda_interval_m                    = 60,
  gfdda_end_h                         = 9999,
  io_form_gfdda                       =   2,
  fgdt                                =   0,

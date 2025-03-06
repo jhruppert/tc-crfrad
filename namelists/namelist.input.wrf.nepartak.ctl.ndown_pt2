@@ -51,7 +51,7 @@
  max_dz                              = 500,
  dzbot                               = 50,
  p_top_requested                     = 1200,
- num_metgrid_levels                  = 32,
+ num_metgrid_levels                  = 38,
  num_metgrid_soil_levels             = 4,
  dx                                  = 1000,
  dy                                  = 1000,
