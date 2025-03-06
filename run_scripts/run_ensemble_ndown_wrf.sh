@@ -39,81 +39,36 @@
 
 # Selection to run the different stages of REAL, NDOWN, WRF
 # ...which should go in the order as listed
-stage="real1" # Run real for coarse domain
+# stage="real1" # Run real for coarse domain
 # stage="wrf1" # Run wrf for coarse domain
 # stage="real2" # Get new ICs in prep for ndown
   # -- can run real2 concurrently with wrf1
 # stage="real3" # Run ndown to prepare fine domain
-# stage="wrf2" # Run wrf for fine domain
+stage="wrf2" # Run wrf for fine domain
 # stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
-
-# Select case name
-case_name="nepartak"
-# case_name="nangka"
-
-# Select test (e.g., "ctl", "ncrf", etc.)
-test_name="ctl"
-# test_name="ncrf12h"
-
-# Select test to use namelist, BCs, ICs from for restart
-restart_base="ctl"
-
-# Select compiled wrf version to use (usually ctl) to fill run directory
-wrf_compiled="ctl"
 
 # Number of ensemble members
 # nens=5
 nens=1
 
-# NDOWN inner neest start time
-ndown_t_stamp_start="2016-07-01_00:00:00"
-# ndown_t_stamp_start="2015-07-04_00:00:00"
-
-# Restart
-# restart_t_stamp_start="2015-07-04_18:00:00"
-# restart_t_stamp_end="2015-07-06_00:00:00"
-
 ###################################################
+
+# Import top-level settings and directory paths for experiment
+. ./config_tc-crfrad.sh --source-only
+
 # Import functions
 . ./functions.sh --source-only
 
 ###################################################
-# Supercomputer environment-specific settings
-
-# Current ongoing projects (totals as of as of 11/16/24):
-#  - XX UFSU0031: Allison's exploratory allocation (remaining: 465k)
-#  - UOKL0053: James's PICCOLO large allocation (20M)
-#  - UOKL0049: James's TC-CRF large allocation (22M)
-#  - UOKL0056: Frederick's TC small allocation (500k)
-
-  system='derecho'
-  if [[ ${system} == 'derecho' ]]; then
-    queue="main"
-    if [[ $stage == *"real"* ]]; then
-      bigN=5
-    elif [[ $stage == *"wrf"* ]]; then
-      bigN=33
-    fi
-    project_code="UOKL0049" # Project to charge core hours against
-    node_line="select=${bigN}:ncpus=128:mpiprocs=128:ompthreads=1" # Batch script node line
-    submit_command="qsub" # Job submission command
-    mpi_command="mpiexec" # MPI executable command
-    work_dir=${work}/tc-crfrad # parent directory containing a bunch of stuff
-    ensemb_dir=${scratch}/tc-crfrad/${case_name} # where each ensemble simulation is run
-    sourc_file=${work_dir}/bashrc_wrf_der # source file for setting environment variables
-    wrf_run_dir=$work_dir/tests_compiled/$wrf_compiled # directory with all WRF run code for selected test
-  elif [[ ${system} == 'oscer' ]]; then
-    echo "NEED TO UPDATE THIS"
-    exit 0
-  fi
-
-###################################################
 # Case-specific WRF job settings
 
-  # if [[ ${case_name} == 'nepartak' ]]; then
   # CTL job settings
-  if [[ $stage == *"real"* ]]; then
+  if [[ $stage == "real1" ]]; then
     run_time='02:00' # HH:MM Job run time
+  elif [[ ($stage == "real2") || ($stage == "real3") ]]; then
+    run_time='03:30' # HH:MM Job run time
+  # elif [[ $stage == *"real"* ]]; then
+  #   run_time='02:00' # HH:MM Job run time
   elif [[ $stage == *"wrf"* ]]; then
     run_time='12:00' # HH:MM Job run time
   fi
@@ -122,6 +77,26 @@ ndown_t_stamp_start="2016-07-01_00:00:00"
     run_time='12:00' # HH:MM Job run time
   fi
   # fi
+
+###################################################
+# Supercomputer environment-specific settings
+
+system='derecho'
+if [[ ${system} == 'derecho' ]]; then
+    queue="main"
+    if [[ $stage == *"real"* ]]; then
+        bigN=5
+    elif [[ $stage == *"wrf"* ]]; then
+        bigN=33
+    fi
+    # MPI job settings
+    node_line="select=${bigN}:ncpus=128:mpiprocs=128:ompthreads=1" # Batch script node line
+    submit_command="qsub" # Job submission command
+    mpi_command="mpiexec" # MPI executable command
+elif [[ ${system} == 'oscer' ]]; then
+    echo "NEED TO UPDATE THIS"
+    exit 0
+fi
 
 ###################################################
 # Set working subdirectory "wrf_dir"
@@ -139,7 +114,6 @@ ndown_t_stamp_start="2016-07-01_00:00:00"
 ###################################################
 
 for em in $(seq -w 01 $nens); do # Ensemble member
-# for em in $(seq -w 01 04); do # Ensemble member
 # for em in 01; do # Ensemble member
 
   cd $ensemb_dir
@@ -158,7 +132,9 @@ for em in $(seq -w 01 $nens); do # Ensemble member
   # Copy WRF run directory contents for selected test to current directory
   /bin/cp -rafL ${wrf_run_dir}/* .
   # List of additional output variables
-  /bin/cp $work_dir/namelists/var_extra_output .
+  if [ "$do_special_out_vars" = true ]; then
+    /bin/cp $work_dir/namelists/var_special_output .
+  fi
   # Source file for environmental modules
   /bin/cp $sourc_file ./bashrc_wrf
   # Remove extraneous namelist if exists and grab the one needed for the test
@@ -190,6 +166,7 @@ for em in $(seq -w 01 $nens); do # Ensemble member
       # Modify namelist
       # sed -i "s/start_hour.*/start_hour = 12, 12,/" namelist.input
       sed -i "s/max_dom.*/max_dom = 2,/" namelist.input
+      sed -i "s/grid_fdda.*/grid_fdda = 0,/" namelist.input
       exec_name="real.exe"
     elif [[ $stage == "real3" ]]; then
     # Ndown step
@@ -240,7 +217,7 @@ fi
 
     # Submit REAL job
     # if [[ `grep SUCCESS rsl.error.0000 | wc -l` -eq 0 ]]; then
-      ${submit_command} batch_real.job > submit_real_out.txt
+      # ${submit_command} batch_real.job > submit_real_out.txt
     # fi
 
 ###################################################
@@ -260,7 +237,7 @@ fi
       # overwrite d01 with d02 output from ndown
       mv wrfinput_d02 wrfinput_d01
       mv wrfbdy_d02 wrfbdy_d01
-      # Delete symbolic links to output of wrf_coarse
+      # Delete symbolic links to output of wrf_coarse so that they don't get overwritten
       /bin/rm -f wrfout_d*
     elif [[ $stage == "wrfrst" ]]; then
     # In case of restart, grab new copy of corresponding namelist
