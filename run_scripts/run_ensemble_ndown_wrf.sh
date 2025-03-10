@@ -133,7 +133,7 @@ for em in $(seq -w 01 $nens); do # Ensemble member
   /bin/cp -rafL ${wrf_run_dir}/* .
   # List of additional output variables
   if [ "$do_special_out_vars" = true ]; then
-    /bin/cp $work_dir/namelists/var_special_output .
+    /bin/cp $work_dir/namelists/var_extra_output .
   fi
   # Source file for environmental modules
   /bin/cp $sourc_file ./bashrc_wrf
@@ -217,7 +217,7 @@ fi
 
     # Submit REAL job
     # if [[ `grep SUCCESS rsl.error.0000 | wc -l` -eq 0 ]]; then
-      # ${submit_command} batch_real.job > submit_real_out.txt
+      ${submit_command} batch_real.job > submit_real_out.txt
     # fi
 
 ###################################################
@@ -287,7 +287,7 @@ mv rsl.* rsl_out/" >> batch_wrf_${test_name}.job
 
     # Submit WRF job
     # if [[ `grep SUCCESS rsl.error.0000 | wc -l` -eq 0 ]] then
-      ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
+      # ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
     # fi
     # tail submit_wrf_out.txt
 

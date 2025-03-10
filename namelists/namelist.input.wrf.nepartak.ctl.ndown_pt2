@@ -26,7 +26,7 @@
  ignore_iofields_warning             = .true.,
  io_form_auxinput4                   = 2
  auxinput4_inname                    = wrflowinp_d<domain>
- auxinput4_interval                  = 360, 360,
+ auxinput4_interval                  = 60, 60,
  io_form_auxinput2 = 2,
 ! auxhist7_outname    = "hfout_d<domain>_<date>"
 ! auxhist7_interval   = 5, 5,
@@ -36,11 +36,10 @@
 
  &domains
  max_dom                             = 1,
- time_step                           = 6,
- time_step_fract_num                 = 0,
- time_step_fract_den                 = 1,
+ time_step = 8,
  use_adaptive_time_step              = .true.,
- starting_time_step                  = -1
+ max_time_step = 10000,
+ target_cfl = 2.0, 2.0,
  e_we                                = 2511,
  e_sn                                = 1926,
  e_vert                              = 80, 80, 80,
@@ -107,6 +106,7 @@
  moist_adv_opt                       = 1,      1, 1,
  scalar_adv_opt                      = 1,      1, 1,
  gwd_opt                             = 0,      0, 0,
+ zadvect_implicit = 1,
  /
 
  &bdy_control
