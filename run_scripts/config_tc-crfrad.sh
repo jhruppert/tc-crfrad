@@ -36,12 +36,12 @@ test_name="ctl"
 # Select compiled wrf version to use (usually ctl) to fill run directory
 wrf_compiled="ctl"
 
-# Special output variables?
-do_special_out_vars=true
+# Special input/output?
+do_special_io=true
 
 # Directory paths
 work_dir=${work}/${project_name} # main directory containing WRF/, namelists/, etc.
-sourc_file=${work_dir}/bashrc_wrf_der # source file for setting environment variables
+source_file=${work_dir}/bashrc_wrf_der # source file for setting environment variables
 # wrf_run_dir=${work_dir}/tests_compiled/$wrf_compiled # directory with all WRF run code for selected test
 wrf_run_dir=${work}/wrf-largedomfix/tests_compiled/$wrf_compiled # directory with all WRF run code for selected test
 ensemb_dir=${scratch}/${project_name}/${case_name} # output directory for ensemble simulations
