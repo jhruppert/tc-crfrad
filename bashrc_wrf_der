@@ -18,6 +18,8 @@ module load craype/2.7.23
 module load netcdf-mpi/4.9.2
 # module load netcdf/4.9.2
 
+export NETCDFPAR=$NETCDF
+
 #export I_MPI_CC=icc
 #export I_MPI_CXX=icpc
 #export I_MPI_F90=ifort

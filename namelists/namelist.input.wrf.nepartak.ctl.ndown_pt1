@@ -14,15 +14,15 @@
  interval_seconds                    = 3600
  input_from_file                     = .true.,.true.,
  history_interval                    = 60, 20,
- frames_per_outfile                  = 24, 72,
+ frames_per_outfile                  = 1,1,24, 72,
  restart                             = .false.,
  restart_interval                    = 1440,
  write_hist_at_0h_rst                = .true.,
- io_form_history                     = 2
- io_form_restart                     = 2
- io_form_input                       = 2
+ io_form_history                     = 13
+ io_form_restart                     = 13
+ io_form_input                       = 13
  io_form_boundary                    = 2
- iofields_filename                   = "var_extra_output", "var_extra_output", "var_extra_output"
+ iofields_filename                   = "runtime_io.txt", "runtime_io.txt", "runtime_io.txt"
  ignore_iofields_warning             = .true.,
  io_form_auxinput4                   = 2
  auxinput4_inname                    = wrflowinp_d<domain>
@@ -31,7 +31,8 @@
 ! auxhist7_outname    = "hfout_d<domain>_<date>"
 ! auxhist7_interval   = 5, 5,
 ! io_form_auxhist7    = 2
- frames_per_auxhist9 = 288, 288,
+! frames_per_auxhist9 = 288, 288,
+ nocolons = .true.
  /
 
  &domains
@@ -81,7 +82,7 @@
  fractional_seaice                   = 0,
  sst_update                          = 1,
  sst_skin                            = 1,
- do_radar_ref                        = 1,
+ do_radar_ref                        = 0,
  isftcflx = 1,
  /
 

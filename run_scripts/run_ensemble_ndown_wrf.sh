@@ -48,8 +48,15 @@ stage="wrf2" # Run wrf for fine domain
 # stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
 
 # Number of ensemble members
-# nens=5
-nens=1
+nens=10
+# nens=1
+
+# Switch to run only the deterministic run
+run_deterministic=true
+# run_deterministic=false
+if [ "$run_deterministic" = true ]; then
+  nens=1
+fi
 
 ###################################################
 
@@ -64,11 +71,13 @@ nens=1
 
   # CTL job settings
   if [[ $stage == "real1" ]]; then
-    run_time='02:00' # HH:MM Job run time
+    run_time='04:00' # HH:MM Job run time
   elif [[ ($stage == "real2") || ($stage == "real3") ]]; then
-    run_time='03:30' # HH:MM Job run time
+    run_time='05:00' # HH:MM Job run time
   # elif [[ $stage == *"real"* ]]; then
   #   run_time='02:00' # HH:MM Job run time
+  elif [[ $stage == "wrf1" ]]; then
+    run_time='06:00' # HH:MM Job run time
   elif [[ $stage == *"wrf"* ]]; then
     run_time='12:00' # HH:MM Job run time
   fi
@@ -85,7 +94,7 @@ system='derecho'
 if [[ ${system} == 'derecho' ]]; then
     queue="main"
     if [[ $stage == *"real"* ]]; then
-        bigN=5
+        bigN=15
     elif [[ $stage == *"wrf"* ]]; then
         bigN=33
     fi
@@ -101,7 +110,6 @@ fi
 ###################################################
 # Set working subdirectory "wrf_dir"
 
-  jobname="${case_name}_${test_name}"
   if [[ $stage == "real1" ]] || [[ $stage == "wrf1" ]]; then
     wrf_dir="wrf_coarse"
   elif [[ $stage == "real2" ]] || [[ $stage == "real3" ]] || [[ $stage == "wrf2" ]] || [[ $stage == "wrfrst" ]]; then
@@ -120,11 +128,17 @@ for em in $(seq -w 01 $nens); do # Ensemble member
 
   # Create directory tree (e.g., as "memb_02/ctl/wrf") for ensemble member
   memb_dir="$ensemb_dir/memb_${em}"
+  if [ "$run_deterministic" = true ]; then
+    memb_dir="$ensemb_dir/deterministic"
+  fi
   mkdir -p $memb_dir # -p ignores if directory already exists
   test_dir=$memb_dir/$test_name
   mkdir -p $test_dir
   mkdir -p $test_dir/$wrf_dir
   cd $test_dir/$wrf_dir
+
+  # jobname="${case_name}_${test_name}"
+  jobname="${stage}"
 
   echo "Running ${stage} in $test_dir/$wrf_dir"
 
@@ -132,11 +146,11 @@ for em in $(seq -w 01 $nens); do # Ensemble member
   # Copy WRF run directory contents for selected test to current directory
   /bin/cp -rafL ${wrf_run_dir}/* .
   # List of additional output variables
-  if [ "$do_special_out_vars" = true ]; then
-    /bin/cp $work_dir/namelists/var_extra_output .
+  if [ "$do_special_io" = true ]; then
+    /bin/cp $work_dir/namelists/runtime_io.txt .
   fi
   # Source file for environmental modules
-  /bin/cp $sourc_file ./bashrc_wrf
+  /bin/cp $source_file ./bashrc_wrf
   # Remove extraneous namelist if exists and grab the one needed for the test
   /bin/rm -f namelist.input
   # Delete rsl-out from previous steps
@@ -150,6 +164,7 @@ for em in $(seq -w 01 $nens); do # Ensemble member
 
     # Link met_em* files to current directory
     ln -sf $memb_dir/met_em/met_em* .
+    for metfile in met_em*; do mv $metfile `echo $metfile | tr ':' '_'` 2>/dev/null; done
 
     # Prepare start data for REAL, NDOWN
     if [[ $stage == "real1" ]]; then
@@ -179,6 +194,7 @@ for em in $(seq -w 01 $nens); do # Ensemble member
       sed -i "s/max_dom.*/max_dom = 2,/" namelist.input
       cp ndown_save/wrfinput_d02 wrfndi_d02
       cp ndown_save/wrflowinp_d02 wrflowinp_d01
+      /bin/rm -f met_em.d*
       ln -sf ../wrf_coarse/wrfout_d* .
       exec_name="ndown.exe"
     fi
@@ -287,7 +303,7 @@ mv rsl.* rsl_out/" >> batch_wrf_${test_name}.job
 
     # Submit WRF job
     # if [[ `grep SUCCESS rsl.error.0000 | wc -l` -eq 0 ]] then
-      # ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
+      ${submit_command} batch_wrf_${test_name}.job > submit_wrf_out.txt
     # fi
     # tail submit_wrf_out.txt
 
