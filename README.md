@@ -18,7 +18,7 @@ WRF setup notes:
 - Using NDOWN to provide greatest constraint of large-scale environment across tests of the model experiment
 - Domain setup:
   - 5km outer nest, 1km inner nest
-  - Outer nest is nudged (using analysis nudging) for entire period, only above the PBL
+  - No nudging for final version. [XX Outer nest is nudged (using analysis nudging) for entire period, only above the PBL]
   - Outer nest is initialized 12 hours earlier than inner 1km nest
 - Based on tests and recommendations of [Delfenio et al. 2022](https://doi.org/10.5194/nhess-22-3285-2022):
   - isftcflx set to 1.

@@ -5,3 +5,4 @@ tests_compiled
 __pycache__
 .DS_Store
 bcsics
+out_batch*

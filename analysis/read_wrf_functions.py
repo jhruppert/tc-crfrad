@@ -1,4 +1,4 @@
-# Read functions for WRF output.
+# Read functions for WRF simulations.
 # 
 # James Ruppert
 # 23 Nov 2024
@@ -6,6 +6,7 @@
 from netCDF4 import Dataset
 import numpy as np
 import subprocess
+import os
 
 # Read WRF file list
 def get_wrf_file_list(filedir, tag):
@@ -27,9 +28,20 @@ def wrf_dims(wrffile):
     nx1 = lat1d.size
     nx2 = lon1d.size
     nz = wrffile_read.dimensions['bottom_top'].size
-    nt = wrffile_read.dimensions['Time'].size
+    npd = wrffile_read.dimensions['Time'].size
     wrffile_read.close()
-    return lat1d, lon1d, nx1, nx2, nz, nt
+    return lat1d, lon1d, nx1, nx2, nz, npd
+
+# Get ensemble member settings
+def memb_dir_settings(datdir, case, test_process, wrf_dom, memb_dir):
+    wrfdir = datdir+case+'/'+memb_dir+'/'+test_process+"/"+wrf_dom+"/"
+    outdir = wrfdir+"post_proc/"
+    os.makedirs(outdir, exist_ok=True)
+    # Get WRF file list, dimensions
+    wrffiles = get_wrf_file_list(wrfdir, "wrfout_d01*")
+    lat, lon, nx1, nx2, nz, npd = wrf_dims(wrffiles[0])
+    nfiles = len(wrffiles)
+    return outdir, wrffiles, nfiles, npd
 
 # Read arbitrary dimension size
 def get_file_dim(infile, dimname):
@@ -38,6 +50,22 @@ def get_file_dim(infile, dimname):
     file_read.close()
     return ndim
 
+# Read post-processed file list and dimensions
+def get_postproc_dims(datdir, case, test_process, wrf_dom, memb_dir):
+    outdir = datdir+case+'/'+memb_dir+'/'+test_process+"/"+wrf_dom+"/post_proc/"
+    # Get file list, dimensions
+    postproc_files = get_wrf_file_list(outdir, "*nc")
+    # Find file tmpk
+    # ifile = np.where(['tmpk' in postproc_files[ifile] for ifile in range(len(postproc_files))])[0][0]
+    ifile = np.where(['HFX' in postproc_files[ifile] for ifile in range(len(postproc_files))])[0][0]
+    file_read = Dataset(postproc_files[ifile])
+    nt = file_read.dimensions['XTIME'].size
+    nx = file_read.dimensions['west_east'].size
+    ny = file_read.dimensions['south_north'].size
+    # p_levels = file_read.variables['p_interp'][...]
+    file_read.close()
+    return outdir, postproc_files, nt, nx, ny#, p_levels
+
 # Read WRF variable
 def wrf_var_read(infile, varname):
     ncfile = Dataset(infile)
@@ -45,50 +73,34 @@ def wrf_var_read(infile, varname):
     ncfile.close()
     return np.squeeze(var)
 
-def get_times_wrffiles(files, interval, units):
-    # def slicer_vectorized(a,start,end):
-    #     b = a.view((str,1)).reshape(len(a),-1)[:,start:end]
-    #     return np.frombuffer(b.tobytes(),dtype=(str,end-start))
-    # for ifile in range(len(files)):
-    #     files[ifile] = files[ifile].strip()
-    #     filenc=nc.Dataset(files[ifile])
-    #     char_var = filenc.variables['Time']
-    #     # try:
-    #     #     char_var = filenc.variables['Time']
-    #     # except:
-    #     #     char_var = filenc.variables['Times']
-    #     try:
-    #         itime = nc.chartostring(char_var[:])
-    #         itime = [t.replace("_", "T") for t in itime]  # Replace underscore with space
-    #     except:
-    #         if char_var.shape[0] == 1:
-    #             split = files[ifile].split('_')
-    #             itime = split[-2]+'T'+split[-1]
-    #         else:
-    #             print('Need another fix here')
-    #     filenc.close()
-    #     itime_dt = np.array(itime, dtype='datetime64[m]')
-    #     if ifile == 0:
-    #         times_sav=itime_dt
-    #     else:
-    #         try:
-    #             times_sav=np.concatenate((times_sav, itime_dt))
-    #         except:
-    #             times_sav=np.concatenate((times_sav, itime_dt[np.newaxis]))
-    def date_from_wrf_filename(filename):
-        wrfname = filename.split("/")[-1]
-        yyyy = wrfname.split("_")[2][0:4]
-        mm = wrfname.split("_")[2].split("-")[1][0:2]
-        dd = wrfname.split("_")[2].split("-")[2][0:2]
-        hh = wrfname.split("_")[3][0:2]
-        nn = wrfname.split("_")[4][0:2]
-        datestr = f"{yyyy}-{mm}-{dd}T{hh}:{nn}:00"
-        return datestr
-
-    times_sav = np.arange(
-        np.array(date_from_wrf_filename(files[0]), dtype='datetime64['+units+']'),
-        np.array(date_from_wrf_filename(files[-1]), dtype='datetime64['+units+']') + np.timedelta64(interval, units),
-        interval,
-        dtype='datetime64['+units+']')
-
-    return times_sav
+# def get_times_wrffiles(files):
+#     # def slicer_vectorized(a,start,end):
+#     #     b = a.view((str,1)).reshape(len(a),-1)[:,start:end]
+#     #     return np.frombuffer(b.tobytes(),dtype=(str,end-start))
+#     for ifile in range(len(files)):
+#         files[ifile] = files[ifile].strip()
+#         filenc=nc.Dataset(files[ifile])
+#         char_var = filenc.variables['Time']
+#         # try:
+#         #     char_var = filenc.variables['Time']
+#         # except:
+#         #     char_var = filenc.variables['Times']
+#         try:
+#             itime = nc.chartostring(char_var[:])
+#             itime = [t.replace("_", "T") for t in itime]  # Replace underscore with space
+#         except:
+#             if char_var.shape[0] == 1:
+#                 split = files[ifile].split('_')
+#                 itime = split[-2]+'T'+split[-1]
+#             else:
+#                 print('Need another fix here')
+#         filenc.close()
+#         itime_dt = np.array(itime, dtype='datetime64[m]')
+#         if ifile == 0:
+#             times_sav=itime_dt
+#         else:
+#             try:
+#                 times_sav=np.concatenate((times_sav, itime_dt))
+#             except:
+#                 times_sav=np.concatenate((times_sav, itime_dt[np.newaxis]))
+#     return times_sav
