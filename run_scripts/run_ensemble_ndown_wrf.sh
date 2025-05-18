@@ -44,16 +44,16 @@
 # stage="real2" # Get new ICs in prep for ndown
   # -- can run real2 concurrently with wrf1
 # stage="real3" # Run ndown to prepare fine domain
-stage="wrf2" # Run wrf for fine domain
-# stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
+# stage="wrf2" # Run wrf for fine domain
+stage="wrfrst" # Restart wrf for fine domain, including for sens. tests
 
 # Number of ensemble members
 nens=10
 # nens=1
 
 # Switch to run only the deterministic run
-run_deterministic=true
-# run_deterministic=false
+# run_deterministic=true
+run_deterministic=false
 if [ "$run_deterministic" = true ]; then
   nens=1
 fi
@@ -163,7 +163,12 @@ for em in $(seq -w 01 $nens); do # Ensemble member
   if [[ $stage == *"real"* ]]; then
 
     # Link met_em* files to current directory
-    ln -sf $memb_dir/met_em/met_em* .
+    if [ "$run_deterministic" = true ]; then
+      ln -sf $memb_dir/met_em/met_em* .
+    else
+      # Use ensemble perturbation met_em files
+      ln -sf $memb_dir/met_em_final/met_em* .
+    fi
     for metfile in met_em*; do mv $metfile `echo $metfile | tr ':' '_'` 2>/dev/null; done
 
     # Prepare start data for REAL, NDOWN

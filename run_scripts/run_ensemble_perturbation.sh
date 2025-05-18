@@ -22,8 +22,8 @@ nmem=10
 # nmem=1
 
 # Get ensemble mean
-do_ens_mean=true
-# do_ens_mean=false
+# do_ens_mean=true
+do_ens_mean=false
 
 ##### Function to get header ########################################
 function qsub_header {
@@ -46,7 +46,6 @@ mkdir -p $TMPDIR
 module load nco
 EOF
 }
-
 ##### Function to get ensemble mean ########################################
 function qsub_file_ensmean {
   # $1 = batch file name
@@ -57,19 +56,37 @@ echo "Calculating ensemble means..."
 cd met_em_mean
 # Iterate over file list
 while read -r file; do
-  echo "Running ens mean: \$file"
-  nces ../../memb_*/met_em/\${file} \${file}
+  # Check if file exists, skip if so
+  if [ -f \${file} ]; then
+    echo "File exists, skipping..."
+  else
+    echo "Running ens mean: \$file"
+    nces nces ../../memb_*/met_em/\${file} \${file}
+  fi
 done < ../file_list.txt
-
+echo "Finished!"
+" >> ${1}
+}
+##### Function to get ens differences ########################################
+function qsub_file_diff {
+  # $1 = batch file name
+  qsub_header ${1}
+echo "
 # Get difference deterministic - ensemble mean
 echo " "
 echo "Calculating differences..."
-cd ../met_em_prime
+cd met_em_prime
 # Iterate over file list
 while read -r file; do
-  echo "Running diff: \$file"
-  ncdiff ../../deterministic/met_em/\${file} ../met_em_mean/\${file} \${file}
+  # Check if file exists, skip if so
+  if [ -f \${file} ]; then
+    echo "File exists, skipping..."
+  else
+    echo "Running ens diff: \$file"
+    ncdiff ../../deterministic/met_em/\${file} ../met_em_mean/\${file} \${file}
+  fi
 done < ../file_list.txt
+echo "Finished!"
 " >> ${1}
 }
 ############################################################################
@@ -81,11 +98,18 @@ function qsub_file_final {
 echo "
 # Add prime terms to ensemble member to get final forcings
 echo "Combining prime and ens. members to produce final forcing"
+cd met_em_final
 # Iterate over file list
 while read -r file; do
-  echo "Running add: \$file"
-  ncadd ../met_em/\${file} ../../ens_mean/met_em_prime/\${file} \${file}
+  if [ -f \${file} ]; then
+    echo "File exists, skipping..."
+  else
+    echo "Running add: \$file"
+    ncbo --op_typ=add ../met_em/\${file} ../../ens_mean/met_em_prime/\${file} \${file}
+    # ncadd ../met_em/\${file} ../../ens_mean/met_em_prime/\${file} \${file}
+  fi
 done < ../file_list.txt
+echo "Finished!"
 " >> ${1}
 }
 ############################################################################
@@ -109,6 +133,11 @@ if [ "$do_ens_mean" = true ]; then
   qsub_file_ensmean ${batch_file}
   qsub ${batch_file}
 
+  # Get differences deterministic - ensemble mean
+  batch_file="calc_diff.sh"
+  qsub_file_diff ${batch_file}
+  # qsub ${batch_file}
+
 else
 
 # Loop over ensemble members
@@ -117,12 +146,15 @@ for em in $(seq -w 01 $nmem); do # Ensemble member
   memb_dir="${scdir}/memb_${em}"
   dir_final="${memb_dir}/met_em_final"
   mkdir -p ${dir_final}
-  cd ${dir_final}
+  cd ${memb_dir}
+
+  # Get list of met_em files
+  ls -1 met_em/met_em* | awk -F'/' '{print $NF}' > file_list.txt
 
   # Add prime terms to ensemble member to get final forcings
   batch_file="calc_perturbations.sh"
   qsub_file_final ${batch_file} "memb_${em}"
-  # qsub ${batch_file}
+  qsub ${batch_file}
 
 done
 

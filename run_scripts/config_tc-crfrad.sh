@@ -60,5 +60,5 @@ ndown_t_stamp_start="2016-07-02_00:00:00"
 restart_base="ctl"
 
 # Restart time stamp for WRF
-restart_t_stamp_start="2015-07-04_18:00:00"
-restart_t_stamp_end="2015-07-06_00:00:00"
+restart_t_stamp_start="2016-07-02_18:00:00"
+restart_t_stamp_end="2016-07-06_00:00:00"
