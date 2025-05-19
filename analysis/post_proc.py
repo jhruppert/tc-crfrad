@@ -18,6 +18,7 @@ import numpy as np
 from post_proc_functions import *
 import os
 import xarray as xr
+import sys
 
 # Post-processing for each test needs to follow the below sequence:
 
@@ -25,7 +26,7 @@ import xarray as xr
 do_2d_vars = False # Set select=10:ncpus=1:mpiprocs=1:ompthreads=1
 
 # 2D ACRE variables - takes 00:45 (HH:MM) for 4 days of data
-do_acre = True # Set select=1:ncpus=8:mpiprocs=8:ompthreads=1
+do_acre = False # Set select=1:ncpus=8:mpiprocs=8:ompthreads=1
 
 # Rainrate - takes 00:05 (HH:MM) for 4 days of data
 do_rainrate = False # Set select=10:ncpus=1:mpiprocs=1:ompthreads=1
@@ -36,7 +37,8 @@ do_refl = False # Set select=1:ncpus=1:mpiprocs=1:ompthreads=1
 # Special variables (includes 3D variables)
 #  SLP takes 05:00 (HH:MM) for 4 days of data
 #  AVO takes 09:25 (HH:MM) for 4 days of data
-do_special_vars = False # Set select=10:ncpus=1:mpiprocs=1:ompthreads=1
+#  PCLASS takes 03:30 (HH:MM) for 4 days of data
+do_special_vars = True # Set select=10:ncpus=1:mpiprocs=1:ompthreads=1
 
 ########################################################
 # Directories and test selection
@@ -285,7 +287,7 @@ if do_special_vars:
     outdir, wrffiles, nfiles, npd = memb_dir_settings(datdir, case, test_process, wrf_dom, memb_dir)
 
     # for ivar_str in var_list[1]:
-    ivar_str = 'slp'
+    ivar_str = 'pclass'
 
     print("Processing "+ivar_str+" for "+memb_dir)
 
@@ -294,13 +296,6 @@ if do_special_vars:
         p_levels=avor_plevels
     else:
         p_levels=new_p_levels
-
-    # Determine 2D or 3D
-    if ivar_str == 'slp' or ivar_str == 'pclass' or ivar_str == 'pw' or \
-        ivar_str == 'vmf' or ivar_str == 'pw_sat':
-        tag2d = '2D'
-    else:
-        tag2d = '3D'
 
     # Read in variable from WRF files
 
@@ -323,7 +318,7 @@ if do_special_vars:
         wrffile = wrffiles[ifile]
 
         # Get variables for entire file
-        var_ifile, xtime_read = get_vars_ifile_special(wrffile, ivar_str, xtime_read, t0, t1, tag=tag2d, new_p_levels=p_levels)
+        var_ifile, xtime_read = get_vars_ifile_special(wrffile, ivar_str, xtime_read, t0, t1, new_p_levels=p_levels)
         # Check if dictionary is empty
         if var_ifile is None:
             continue

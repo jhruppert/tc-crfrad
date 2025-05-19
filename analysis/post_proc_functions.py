@@ -135,8 +135,7 @@ def get_3d_vars_it(ds, it_file, ivar_str, new_p_levels):
 # Using an efficient method of skipping repeat time steps, so
 # the job of remove_duplicates is already done here.
 
-# def get_vars_ifile(file, var_list, xtime_read, t0, t1, tag='2D', new_p_levels=None):
-def get_vars_ifile_special(file, ivar_str, xtime_read, t0, t1, tag='2D', new_p_levels=None):
+def get_vars_ifile_special(file, ivar_str, xtime_read, t0, t1, new_p_levels=None):
     ds = Dataset(file)
     nt_file = ds.dimensions['Time'].size
     xtime_min = ds.variables['XTIME'][:]
@@ -144,7 +143,6 @@ def get_vars_ifile_special(file, ivar_str, xtime_read, t0, t1, tag='2D', new_p_l
     start_date = np.datetime64('T'.join(split))
     xtime_file = np.array([start_date + np.timedelta64(int(x), 'm') for x in xtime_min])
     # Loop over dataset time steps
-    # vars_ifile = {}
     var_ifile = None
     for it_file in range(nt_file):
         # Check if within target time range
@@ -158,16 +156,13 @@ def get_vars_ifile_special(file, ivar_str, xtime_read, t0, t1, tag='2D', new_p_l
         print("Processing "+ivar_str+" for ",xtime_file[it_file])
         # Otherwise, add new time to xtime_read and process variables
         xtime_read = np.append(xtime_read, xtime_file[it_file])
-        # vars_it = get_3d_vars_it(ds, it_file, var_list, new_p_levels)
-        if tag == '2D':
+        # 2D variables
+        if ivar_str == 'slp' or ivar_str == 'pclass' or ivar_str == 'pw' or \
+            ivar_str == 'vmf' or ivar_str == 'pw_sat':
             var_it = get_2d_special_vars_it(ds, it_file, ivar_str)
+        # 3D variables
         else:
             var_it = get_3d_vars_it(ds, it_file, ivar_str, new_p_levels)
-        # for ivar_str in var_list:
-            # if ivar_str in vars_ifile:
-            #     vars_ifile[ivar_str] = xr.concat((vars_ifile[ivar_str], vars_it[ivar_str]), 'Time')
-            # else:
-            #     vars_ifile[ivar_str] = vars_it[ivar_str]
         try:
             var_ifile = xr.concat((var_ifile, var_it), 'Time')
         except:
@@ -240,6 +235,7 @@ def cdo_merge_wrf_variable(outdir, wrffiles, varname_str):
     # First, delete file if exists
     operation_str = 'rm -rf '+outdir+varname_str+'.nc'
     process = subprocess.Popen(operation_str, shell=True, universal_newlines=True)
+    process.wait()
     # runshell(operation_str)
 
     # Create string array of file-specific commands
@@ -323,6 +319,7 @@ def write_ncfile(outdir, var, var_name, tag_extra=''):#, dims_set, pres=None, do
     # First, delete file if exists
     operation_str = 'rm -rf '+file_out
     process = subprocess.Popen(operation_str, shell=True, universal_newlines=True)
+    process.wait()
     # Write to file
     var.to_netcdf(file_out, mode='w')#, format='NETCDF4', unlimited_dims='Time')
     return None

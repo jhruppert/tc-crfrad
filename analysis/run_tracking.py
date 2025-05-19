@@ -8,7 +8,9 @@ import numpy as np
 from object_track import *
 from read_wrf_functions import *
 from mpi4py import MPI
+import sys
 
+# Takes about 10 min to complete
 comm = MPI.COMM_WORLD
 nproc = comm.Get_size()
 
@@ -17,7 +19,11 @@ nproc = comm.Get_size()
 ########################################################
 
 # var_tag = 'avor'
-var_tag = 'avor_850-600'
+# var_tag = 'avor_850-600'
+# var_tag = 'slp'
+
+# Input string at command line
+var_tag = ' '.join(sys.argv[1:]) # Combine arguments into a string
 
 ########################################################
 # Directories and test selection
@@ -99,50 +105,52 @@ elif test_process == 'ncrf48h':
 else:
     test_basis=''
 
-# Get dimensions
-memb_dir = memb_all[comm.rank]
-outdir, postproc_files, nt, nx, ny = get_postproc_dims(datdir, case, test_process, wrf_dom, memb_dir)
-file_read = Dataset(outdir+'avo.nc')
-lon = file_read.variables['XLONG'][:,:]
-lat = file_read.variables['XLAT'][:,:]
-file_read.close()
-
-if (lon.min() < 0) and (lon.max() > 0):
-    lon_offset = dateline_lon_shift(lon, reverse=0)
-else:
-    lon_offset = 0
-
 # for imemb in range(nmem):
-# for imemb in range(1):
 imemb = comm.rank
 
-print("Running tracking for member "+str(imemb))
+print("Running tracking using "+var_tag+" for member "+str(imemb))
+
+outdir, postproc_files, nt, nx, ny = get_postproc_dims(datdir, case, test_process, wrf_dom, memb_all[imemb])
 
 # Prepare variable to use for tracking
-if var_tag == 'avor':
+# if var_tag == 'avor':
 
-    # Level selection
-    ptrack  = 850 # tracking pressure level [hPa]
-    ikread = np.where(pres == ptrack)[0][0]
+#     # Level selection
+#     ptrack  = 850 # tracking pressure level [hPa]
+#     ikread = np.where(pres == ptrack)[0][0]
 
-    track_file_tag = var_tag+'_'+str(round(pres[ikread]))+'hPa'
+#     track_file_tag = var_tag+'_'+str(round(pres[ikread]))+'hPa'
 
-    # Read variable
-    fil = Dataset(datdir+'AVOR.nc') # this opens the netcdf file
-    var = fil.variables['AVOR'][:,ikread,:,:] # 10**-5 /s
-    fil.close()
+#     # Read variable
+#     fil = Dataset(datdir+'AVOR.nc') # this opens the netcdf file
+#     var = fil.variables['AVOR'][:,ikread,:,:] # 10**-5 /s
+#     fil.close()
+
+if var_tag == 'slp':
+
+    track_file_tag = var_tag
+
+    ds = Dataset(outdir+'slp.nc')
+    var = ds.variables['slp'][:,:,:] # hPa
+    lon = ds.variables['XLONG'][:,:]
+    lat = ds.variables['XLAT'][:,:]
+    ds.close()
+
+    # Flip sign of SLP since tracking locates field maxima
+    var *= -1
 
 elif var_tag == 'avor_850-600':
 
     track_file_tag = var_tag
 
-    fil = Dataset(outdir+'avo.nc')
-    pres = fil.variables['interp_level'][:] # hPa
+    ds = Dataset(outdir+'avo.nc')
+    pres = ds.variables['interp_level'][:] # hPa
     ikread = np.where((pres <= 850) & (pres >=600))[0]
-    avor = fil.variables['avo'][:,ikread,:,:] # 10**-5 /s
-    fil.close()
+    avor = ds.variables['avo'][:,ikread,:,:] # 10**-5 /s
+    lon = ds.variables['XLONG'][:,:]
+    lat = ds.variables['XLAT'][:,:]
+    ds.close()
     var = np.mean(avor, axis=1)
-    print("var shape: ", np.shape(var))
 
 nt=np.shape(var)[0]
 
@@ -157,8 +165,13 @@ if i_senstest:
 else:
     basis=0
 
+if (lon.min() < 0) and (lon.max() > 0):
+    lon_offset = dateline_lon_shift(lon, reverse=0)
+else:
+    lon_offset = 0
+
 # Run tracking
-track, f_masked = object_track(var, lon + lon_offset, lat, i_senstest, basis)
+track, f_masked = object_track(var, lon + lon_offset, lat, sens_test=i_senstest, basis=basis)
 
 clon=track[0,:]
 clon_offset = dateline_lon_shift(clon, reverse=1)

@@ -73,6 +73,15 @@ def wrf_var_read(infile, varname):
     ncfile.close()
     return np.squeeze(var)
 
+# Read WRF dimensions
+def read_tc_track(dir, var_name):
+    track_file = dir+'track_'+var_name+'.nc'
+    ds = Dataset(track_file)
+    clon = ds.variables['clon'][:]
+    clat = ds.variables['clat'][:]
+    ds.close()
+    return clon, clat
+
 # def get_times_wrffiles(files):
 #     # def slicer_vectorized(a,start,end):
 #     #     b = a.view((str,1)).reshape(len(a),-1)[:,start:end]

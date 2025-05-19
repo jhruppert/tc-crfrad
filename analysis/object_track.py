@@ -107,11 +107,10 @@ def object_track(f, lon, lat, sens_test=False, basis=None):
         f_masked.mask[0,:,:] = True
 
         # Locate the all-time maximum value
-        fmax = np.max(f_masked)
-        mloc=np.where(f_masked == fmax)
-        itmax = mloc[0][0]
-        xmax=mloc[2][0]
-        ymax=mloc[1][0]
+        mloc = np.unravel_index(np.ma.argmax(f_masked), f_masked.shape)
+        itmax = mloc[0]
+        xmax=mloc[2]
+        ymax=mloc[1]
 
         radius = np.sqrt( (lon-lon[ymax,xmax])**2 + (lat-lat[ymax,xmax])**2 )
 
@@ -123,10 +122,13 @@ def object_track(f, lon, lat, sens_test=False, basis=None):
     # Do the same iterating all the way backward from itmax
     for it in range( np.maximum(itmax-1,0), 0, -1):
 
-        fmax = np.max(f_masked[it,:,:])
-        mloc = np.where(f_masked[it,:,:] == fmax)
-        xmax = mloc[1][0]
-        ymax = mloc[0][0]
+        # fmax = np.max(f_masked[it,:,:])
+        # mloc = np.where(f_masked[it,:,:] == fmax)
+        # xmax = mloc[1][0]
+        # ymax = mloc[0][0]
+        mloc = np.unravel_index(np.ma.argmax(f_masked[it,...]), f_masked[it].shape)
+        xmax=mloc[1]
+        ymax=mloc[0]
 
         radius = np.sqrt( (lon-lon[ymax,xmax])**2 + (lat-lat[ymax,xmax])**2 )
         f_masked[it-1,:,:] = np.ma.masked_where(radius > r_max, f_masked[it-1,:,:], copy=False)
@@ -134,10 +136,13 @@ def object_track(f, lon, lat, sens_test=False, basis=None):
     # Do the same iterating all the way forward from itmax
     for it in range(itmax+1,nt-1):
 
-        fmax = np.max(f_masked[it,:,:])
-        mloc = np.where(f_masked[it,:,:] == fmax)
-        xmax = mloc[1][0]
-        ymax = mloc[0][0]
+        # fmax = np.max(f_masked[it,:,:])
+        # mloc = np.where(f_masked[it,:,:] == fmax)
+        # xmax = mloc[1][0]
+        # ymax = mloc[0][0]
+        mloc = np.unravel_index(np.ma.argmax(f_masked[it,...]), f_masked[it].shape)
+        xmax=mloc[1]
+        ymax=mloc[0]
 
         radius = np.sqrt( (lon-lon[ymax,xmax])**2 + (lat-lat[ymax,xmax])**2 )
         f_masked[it+1,:,:] = np.ma.masked_where(radius > r_max, f_masked[it+1,:,:], copy=False)
