@@ -110,7 +110,7 @@ imemb = comm.rank
 
 print("Running tracking using "+var_tag+" for member "+str(imemb))
 
-outdir, postproc_files, nt, nx, ny = get_postproc_dims(datdir, case, test_process, wrf_dom, memb_all[imemb])
+outdir, postproc_files, nt, nx, ny, lon, lat = get_postproc_dims(datdir, case, test_process, wrf_dom, memb_all[imemb])
 
 # Prepare variable to use for tracking
 # if var_tag == 'avor':
@@ -132,8 +132,6 @@ if var_tag == 'slp':
 
     ds = Dataset(outdir+'slp.nc')
     var = ds.variables['slp'][:,:,:] # hPa
-    lon = ds.variables['XLONG'][:,:]
-    lat = ds.variables['XLAT'][:,:]
     ds.close()
 
     # Flip sign of SLP since tracking locates field maxima
@@ -147,10 +145,9 @@ elif var_tag == 'avor_850-600':
     pres = ds.variables['interp_level'][:] # hPa
     ikread = np.where((pres <= 850) & (pres >=600))[0]
     avor = ds.variables['avo'][:,ikread,:,:] # 10**-5 /s
-    lon = ds.variables['XLONG'][:,:]
-    lat = ds.variables['XLAT'][:,:]
     ds.close()
-    var = np.mean(avor, axis=1)
+    avor = np.where((np.abs(avor) < 1e10), avor, np.nan) # Mask out bad values
+    var = np.nanmean(avor, axis=1)
 
 nt=np.shape(var)[0]
 

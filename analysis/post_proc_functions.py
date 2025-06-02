@@ -60,9 +60,7 @@ def var_readcheck(varname, dict_pass):
 # Read and reduce variables for a given time step
 # def get_2d_special_vars_it(ds, it_file, var_list):
 def get_2d_special_vars_it(ds, it_file, ivar_str):
-    # vars_it = {}
     dict_pass = {'ds': ds, 'timeidx': it_file}
-    # for ivar_str in var_list:
     if ivar_str == 'pclass' or ivar_str == 'pw' or ivar_str == 'pw_sat' or ivar_str == 'vmf':
         dp, dict_pass = var_readcheck('dp', dict_pass)
     if ivar_str == "pclass":
@@ -83,8 +81,27 @@ def get_2d_special_vars_it(ds, it_file, ivar_str):
         ivar = vert_int(wa, dp)
     elif ivar_str == "slp":
         ivar = getvar(ds, "slp", timeidx=it_file)
-    # vars_it[ivar_str] = ivar
-    # return vars_it
+    elif ivar_str == "mse":
+        qvapor, dict_pass = var_readcheck('qvapor', dict_pass) # kg/kg
+        tmpk, dict_pass = var_readcheck('tmpk', dict_pass) # K
+        pwrf, dict_pass = var_readcheck('pwrf', dict_pass) # Pa
+        dp, dict_pass = var_readcheck('dp', dict_pass) # Pa
+        gz = getvar(ds, "geopotential", timeidx=it_file) # m2/s2 = J/kg
+        cp=1004.  # J/K/kg
+        cpl=4186. # J/k/kg
+        cpv=1885. # J/K/kg
+        lv0=2.5e6 # J/kg
+        # Latent heat of vaporization
+        lv = lv0 - (cpl-cpv)*(tmpk-273.15)
+        # Moist static energy (MSE)
+        mse = cp*tmpk + gz + lv*qvapor # J/kg
+        g = 9.81 # m/s2
+        # return np.sum(var*dp, axis=1)/g
+        p_int_top = 100e2 # top pressure-level to integrate to [Pa]
+        ivar = (mse*dp/g).where(pwrf >= p_int_top).sum(dim='bottom_top')
+        # Setting keep_attrs=True doesn't work, since taking (var*dp) removes them
+        # So, copy the attributes over from original var, then modify
+        ivar.attrs = tmpk.attrs
     return ivar
 
 ##########################################
@@ -94,9 +111,7 @@ def get_2d_special_vars_it(ds, it_file, ivar_str):
 # Read and vertically interpolate variables for a given time step
 # def get_3d_vars_it(ds, it_file, var_list, new_p_levels):
 def get_3d_vars_it(ds, it_file, ivar_str, new_p_levels):
-    # vars_it = {}
     dict_pass = {'ds': ds, 'timeidx': it_file}
-    # for ivar_str in var_list:
     if ivar_str == "qvapor":
         ivar_ml, dict_pass = var_readcheck('qvapor', dict_pass)
     elif ivar_str == "w":
@@ -123,7 +138,6 @@ def get_3d_vars_it(ds, it_file, ivar_str, new_p_levels):
     else:
         ivar_ml = getvar(ds, ivar_str, timeidx=it_file)
     # Interpolate to new pressure levels
-    # vars_it[ivar_str] = vinterp(ds, ivar_ml, 'p', new_p_levels, field_type='p_hpa', extrapolate=False)
     var_it = vinterp(ds, ivar_ml, 'p', new_p_levels, field_type='p_hpa', extrapolate=False)
     return var_it
 
@@ -158,11 +172,12 @@ def get_vars_ifile_special(file, ivar_str, xtime_read, t0, t1, new_p_levels=None
         xtime_read = np.append(xtime_read, xtime_file[it_file])
         # 2D variables
         if ivar_str == 'slp' or ivar_str == 'pclass' or ivar_str == 'pw' or \
-            ivar_str == 'vmf' or ivar_str == 'pw_sat':
+            ivar_str == 'vmf' or ivar_str == 'pw_sat' or ivar_str == 'mse':
             var_it = get_2d_special_vars_it(ds, it_file, ivar_str)
         # 3D variables
         else:
             var_it = get_3d_vars_it(ds, it_file, ivar_str, new_p_levels)
+        # Stitch multiple time steps from file, if there are any
         try:
             var_ifile = xr.concat((var_ifile, var_it), 'Time')
         except:
@@ -415,6 +430,7 @@ def var_list_special():
         'pw',
         'vmf',
         'pw_sat',
+        'mse',
         # 3D output variables
         'qvapor',
         'w',
@@ -431,12 +447,11 @@ def var_list_special():
         # 'qice',
         # 'qsnow',
         # 'qgraupel',
-        # 'u',
-        # 'v',
+        'ua',
+        'va',
         # 'hght',
         # 'rthratlwcrf',
         # 'rthratswcrf',
-        # 'mse',
         ]
     # return [
     #     # Variables that can be directly interpolated
@@ -489,6 +504,11 @@ def get_metadata(var_name):#, nt, nz, nx1, nx2):
         units = 'kg/m^2/s'
         # dims = ('nt','nx1','nx2')
         # dim_set = [dims, (nt,nx1,nx2)]
+    elif var_name == 'mse':
+        description = 'vertically integrated moist static energy'
+        units = 'J/m^2'
+        # dims = ('nt','nx1','nx2')
+        # dim_set = [dims, (nt,nz,nx1,nx2)]
     #######################################################
     # Basic 3D variables
     #######################################################
@@ -527,12 +547,12 @@ def get_metadata(var_name):#, nt, nz, nx1, nx2):
         units = 'kg/kg'
         # dims = ('nt','nz','nx1','nx2')
         # dim_set = [dims, (nt,nz,nx1,nx2)]
-    elif var_name == 'u':
+    elif var_name == 'ua':
         description = 'zonal wind'
         units = 'm/s'
         # dims = ('nt','nz','nx1','nx2')
         # dim_set = [dims, (nt,nz,nx1,nx2)]
-    elif var_name == 'v':
+    elif var_name == 'va':
         description = 'meridional wind'
         units = 'm/s'
         # dims = ('nt','nz','nx1','nx2')
@@ -595,11 +615,11 @@ def get_metadata(var_name):#, nt, nz, nx1, nx2):
         units = 'K'
         # dims = ('nt','nz','nx1','nx2')
         # dim_set = [dims, (nt,nz,nx1,nx2)]
-    elif var_name == 'mse':
-        description = 'moist static energy'
-        units = 'J/kg'
-        # dims = ('nt','nz','nx1','nx2')
-        # dim_set = [dims, (nt,nz,nx1,nx2)]
+    # elif var_name == 'mse':
+    #     description = 'moist static energy'
+    #     units = 'J/kg'
+    #     # dims = ('nt','nz','nx1','nx2')
+    #     # dim_set = [dims, (nt,nz,nx1,nx2)]
     elif var_name == 'rho':
         description = 'density'
         units = 'kg/m^3'

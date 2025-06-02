@@ -41,7 +41,7 @@ def memb_dir_settings(datdir, case, test_process, wrf_dom, memb_dir):
     wrffiles = get_wrf_file_list(wrfdir, "wrfout_d01*")
     lat, lon, nx1, nx2, nz, npd = wrf_dims(wrffiles[0])
     nfiles = len(wrffiles)
-    return outdir, wrffiles, nfiles, npd
+    return outdir, wrffiles, nfiles, npd#, lat, lon
 
 # Read arbitrary dimension size
 def get_file_dim(infile, dimname):
@@ -60,11 +60,13 @@ def get_postproc_dims(datdir, case, test_process, wrf_dom, memb_dir):
     ifile = np.where(['HFX' in postproc_files[ifile] for ifile in range(len(postproc_files))])[0][0]
     file_read = Dataset(postproc_files[ifile])
     nt = file_read.dimensions['XTIME'].size
+    lon = file_read.variables['XLONG'][:,:] # deg
+    lat = file_read.variables['XLAT'][:,:] # deg
     nx = file_read.dimensions['west_east'].size
     ny = file_read.dimensions['south_north'].size
     # p_levels = file_read.variables['p_interp'][...]
     file_read.close()
-    return outdir, postproc_files, nt, nx, ny#, p_levels
+    return outdir, postproc_files, nt, nx, ny, lon, lat
 
 # Read WRF variable
 def wrf_var_read(infile, varname):
@@ -80,6 +82,9 @@ def read_tc_track(dir, var_name):
     clon = ds.variables['clon'][:]
     clat = ds.variables['clat'][:]
     ds.close()
+    # Set invalid values to NaN
+    clon = np.where((np.abs(clon) < 1e10), clon, np.nan) # Set bad values to NaN
+    clat = np.where((np.abs(clat) < 1e10), clat, np.nan) # Set bad values to NaN
     return clon, clat
 
 # def get_times_wrffiles(files):

@@ -266,11 +266,11 @@ if do_special_vars:
 
     # Define new output pressure levels
     dp=50
-    new_p_levels=np.arange(1000,0,-dp)
-    # new_p_levels=np.array([500,400])
+    new_p_levels=np.arange(1000,50,-dp)
     # For AVOR for tracking
     # avor_plevels=np.array([850,800,750,700,650,600])
     avor_plevels=np.arange(1000,600-dp,-dp)
+    uv_plevels=[850,200]
 
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
@@ -287,13 +287,15 @@ if do_special_vars:
     outdir, wrffiles, nfiles, npd = memb_dir_settings(datdir, case, test_process, wrf_dom, memb_dir)
 
     # for ivar_str in var_list[1]:
-    ivar_str = 'pclass'
+    ivar_str = 'ua'
 
     print("Processing "+ivar_str+" for "+memb_dir)
 
     # Set special pressure levels
     if ivar_str == 'avo':
         p_levels=avor_plevels
+    elif ivar_str == 'ua' or ivar_str == 'va':
+        p_levels=uv_plevels
     else:
         p_levels=new_p_levels
 
