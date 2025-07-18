@@ -17,9 +17,10 @@ request = {
             'volumetric_soil_water_layer_1','volumetric_soil_water_layer_2','volumetric_soil_water_layer_3',
             'volumetric_soil_water_layer_4'
         ],
-        YY,
-        MM,
-        DD,
+        "date": ["DATE-1/DATE-2"],
+        # YY,
+        # MM,
+        # DD,
         # 'area':[Nort, West, Sout, East],
         'time':[
             "00:00", "01:00", "02:00",
