@@ -22,6 +22,12 @@
 source ~/.bashrc
 mamba activate wgrib
 
+# Case selection
+# Nepartak
+# date_tag="20160701-20160706"
+# Maria
+date_tag="20170915-20170920"
+
 # Directories and file paths
 scdir="$scratch/tc-crfrad/bcsics"
 cd $scdir
@@ -43,7 +49,7 @@ for em in $(seq 1 $nmem); do # Ensemble member
 
   echo "Extracting SL for memb_$(printf "%02d" $em)..."
 
-  era5_grib_file="ERA5-20160701-20160706-ens-sl.grib"
+  era5_grib_file="ERA5-${date_tag}-ens-sl.grib"
   input_file="$scdir/$era5_grib_file"
   # Get file name up to .grib from input file
   base_file_name="${era5_grib_file%.grib}"
@@ -81,7 +87,7 @@ for em in $(seq 1 $nmem); do # Ensemble member
 
   echo "Extracting PL for memb_$(printf "%02d" $em)..."
 
-  era5_grib_file="ERA5-20160701-20160706-ens-pl.grib"
+  era5_grib_file="ERA5-${date_tag}-ens-pl.grib"
   input_file="$scdir/$era5_grib_file"
   # Get file name up to .grib from input file
   base_file_name="${era5_grib_file%.grib}"

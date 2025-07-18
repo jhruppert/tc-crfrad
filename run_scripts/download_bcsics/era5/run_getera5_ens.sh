@@ -12,10 +12,23 @@ source ~/.bashrc
 mamba activate cdsapi
 
 # Start/end dates
+
+# Nepartak
 # DATE1=20160701
-# DATE2=20160704
-DATE1=20160705
-DATE2=20160707
+# DATE2=20160706
+
+# Maria
+# DATE1=20170915
+# DATE2=20170920
+
+# Ike
+# DATE1=20080831
+# DATE2=20080905
+
+# Hector
+DATE1=20180730
+DATE2=20180805
+
 
 # Geographical bounds
 # Nort=20
@@ -30,32 +43,8 @@ YY2=`echo $DATE2 | cut -c1-4`
 MM2=`echo $DATE2 | cut -c5-6`
 DD2=`echo $DATE2 | cut -c7-8`
 
-YY='"year": ['
-for i in $(seq -f "%04g" $YY1 $YY2); do
-  YY+='"'$i'", '
-done
-# Remove the trailing comma and space, then add the closing bracket
-YY=${YY%, }']'
-
-MM='"month": ['
-for i in $(seq -f "%02g" $MM1 $MM2); do
-  MM+='"'$i'", '
-done
-# Remove the trailing comma and space, then add the closing bracket
-MM=${MM%, }']'
-
-DD='"day": ['
-for i in $(seq -f "%02g" $DD1 $DD2); do
-  DD+='"'$i'", '
-done
-# Remove the trailing comma and space, then add the closing bracket
-DD=${DD%, }']'
-
-# sed -e "s/YY/${YY}/g;s/MM/${MM}/g;s/DD/${DD}/g;s/Nort/${Nort}/g;s/West/${West}/g;s/Sout/${Sout}/g;s/East/${East}/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-sl.py > GetERA5-${DATE1}-${DATE2}-sl.py
-# sed -e "s/YY/${YY}/g;s/MM/${MM}/g;s/DD/${DD}/g;s/Nort/${Nort}/g;s/West/${West}/g;s/Sout/${Sout}/g;s/East/${East}/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-pl.py > GetERA5-${DATE1}-${DATE2}-pl.py
-
-sed -e "s/YY/${YY}/g;s/MM/${MM}/g;s/DD/${DD}/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-ens-sl.py > GetERA5-${DATE1}-${DATE2}-ens-sl.py
-sed -e "s/YY/${YY}/g;s/MM/${MM}/g;s/DD/${DD}/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-ens-pl.py > GetERA5-${DATE1}-${DATE2}-ens-pl.py
+sed -e "s/DATE-1/"${YY1}-${MM1}-${DD1}"/g;s/DATE-2/"${YY2}-${MM2}-${DD2}"/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-ens-sl.py > GetERA5-${DATE1}-${DATE2}-ens-sl.py
+sed -e "s/DATE-1/"${YY1}-${MM1}-${DD1}"/g;s/DATE-2/"${YY2}-${MM2}-${DD2}"/g;s/DATE1/${DATE1}/g;s/DATE2/${DATE2}/g;" GetERA5-ens-pl.py > GetERA5-${DATE1}-${DATE2}-ens-pl.py
 
 python GetERA5-${DATE1}-${DATE2}-ens-sl.py
 python GetERA5-${DATE1}-${DATE2}-ens-pl.py
