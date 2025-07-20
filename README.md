@@ -31,6 +31,13 @@ WRF setup notes:
 
 
 <br />
+
+Technical step-by-step
+1. Use ***run_getera5_ens.sh*** to download 1) single-level and 2) pressure-level ERA5 ensemble grid files in grib format. These two files include all ensemble member data packed into each, so need to be separated.
+2. To separate into individual ensemble member files, run ***split_era5_ensemble.sh***.
+3. Have a compiled WPS directory ready in the same folder as the parent ensemble folder, and run ***run_wps_era5ens.sh***.
+4. ...
+
 <br />
 
 No longer using:

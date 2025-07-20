@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -N out_batch
 #PBS -A UOKL0049
-#PBS -l walltime=12:00:00
-###PBS -l walltime=00:10:00
+##PBS -l walltime=12:00:00
+#PBS -l walltime=00:30:00
 #PBS -j oe
 #PBS -k eod
 
@@ -29,7 +29,10 @@ mamba activate plotting
 # python wrf_maps.py
 # python post_proc.py
 # mpirun python post_proc.py
-mpirun python post_proc2.py
+# mpirun python post_proc2.py
+# mpirun python era5_shear_write.py nepartak
+# mpirun python era5_shear_write.py maria
+mpirun python era5_shear_write.py hector
 # mpirun python run_tracking.py avor_850-600
 # mpirun python run_tracking.py slp
 # mpirun python time_series_write.py
