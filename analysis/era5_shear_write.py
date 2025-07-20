@@ -1,4 +1,4 @@
-# #### Jupyter notebook to compute shear across ERA5 ensemble for Nepartak forcing data.
+# #### Jupyter notebook to compute shear across ERA5 ensemble for TC forcing data.
 # 
 # James Ruppert  
 # jruppert@ou.edu  
@@ -14,13 +14,21 @@ import xarray as xr
 from tropycal import tracks, recon, utils, realtime
 from geopy.distance import distance
 from mpi4py import MPI
+import sys
 
 comm = MPI.COMM_WORLD
 nproc = comm.Get_size()
 
 
 #### Directories and grib files
-datdir = "/glade/campaign/univ/uokl0049/nepartak/"
+
+# Select case
+# storm = 'nepartak'
+# storm = 'maria'
+# storm = 'hector'
+storm = ' '.join(sys.argv[1:]) # receive input from call to scipt
+
+datdir = "/glade/campaign/univ/uokl0049/"+storm+"/"
 file_tag="mem*/grib/ERA*-pl*grib"
 
 # Get grib file ensemble
@@ -28,18 +36,10 @@ grib_files = get_wrf_file_list(datdir, file_tag)
 nfiles = len(grib_files)
 # grib_files
 
-# General regional subset to work with smaller dataset
-latmin, latmax, lonmin, lonmax = -4, 33.0, 110.0, 156.0
-
 # Get times
-grib_file = xr.open_mfdataset(grib_files[0], engine="cfgrib", combine='by_coords')
-grib_file = grib_file.sel(latitude=slice(latmax, latmin), longitude=slice(lonmin, lonmax))
-grib_times = grib_file.time.values.astype('datetime64[ns]')
-# Create 2D mesh of lat-lon points
-lat = grib_file['latitude']
-lon = grib_file['longitude']
-lon2d, lat2d = np.meshgrid(lon, lat)
-grib_file.close()
+ds = xr.open_mfdataset(grib_files[0], engine="cfgrib", combine='by_coords')
+grib_times = ds.time.values.astype('datetime64[ns]')
+ds.close()
 
 nt_grib = len(grib_times)
 
@@ -49,16 +49,27 @@ nt_grib = len(grib_times)
 
 # Read in basin only if it hasn't been yet
 if 'basin' not in locals():
-    basin = tracks.TrackDataset(basin='west_pacific',source='ibtracs')
-storm = basin.get_storm(('nepartak',2016))
+    match storm:
+        case 'nepartak':
+            basin = tracks.TrackDataset(source='ibtracs', basin='west_pacific')
+            storm_year = 2016
+        case 'maria':
+            basin = tracks.TrackDataset(source='ibtracs', basin='north_atlantic')
+            storm_year = 2017
+        case 'hector':
+            basin = tracks.TrackDataset(source='ibtracs', basin='east_pacific')
+            storm_year = 2018
+        case _:
+            raise ValueError(f"Unknown storm: {storm}")
+tropycal_storm = basin.get_storm((storm,storm_year))
 tc_track = {
-    'vmax': storm.vars['vmax'],
-    'mslp': storm.vars['mslp'],
-    'lon': storm.vars['lon'],
-    'lat': storm.vars['lat'],
-    'time': np.array(storm.vars['time'], dtype='datetime64[ns]'),
-    # 'lon': storm.vars['wmo_lon'],
-    # 'lat': storm.vars['wmo_lat'],
+    'vmax': tropycal_storm.vars['vmax'],
+    'mslp': tropycal_storm.vars['mslp'],
+    'lon': tropycal_storm.vars['lon'],
+    'lat': tropycal_storm.vars['lat'],
+    'time': np.array(tropycal_storm.vars['time'], dtype='datetime64[ns]'),
+    # 'lon': tropycal_storm.vars['wmo_lon'],
+    # 'lat': tropycal_storm.vars['wmo_lat'],
     }
 
 # Interpolate observed TC track to GRIB data times
@@ -132,7 +143,23 @@ grib_file = grib_files[comm.rank]
 
 ds = xr.open_mfdataset(grib_file, engine="cfgrib", combine='by_coords',
                        filter_by_keys={'typeOfLevel': 'isobaricInhPa'})
+
+# Regional subset to work with smaller dataset
+buffer = 11 # Buffer in degrees for lat/lon
+latmin, latmax, lonmin, lonmax = \
+    np.min(tc_track_gribtimes['lat'])-buffer, np.max(tc_track_gribtimes['lat'])+buffer, \
+    np.min(tc_track_gribtimes['lon'])-buffer, np.max(tc_track_gribtimes['lon'])+buffer
+
+# Adjust to absolute longitude for consistency with ERA5
+lonmin = ((lonmin - 180) % 360) + 180
+lonmax = ((lonmax - 180) % 360) + 180
+
 ds = ds.sel(latitude=slice(latmax, latmin), longitude=slice(lonmin, lonmax))
+
+# Create 2D mesh of lat-lon points
+lat = ds['latitude']
+lon = ds['longitude']
+lon2d, lat2d = np.meshgrid(lon, lat)
 
 # Get wind components
 # u850 = ds.u.sel(isobaricInhPa=plevs_shear[0])
@@ -147,7 +174,7 @@ mean_shear_imemb = np.full(nt_interp, np.nan)
 
 for itime in range(nt_interp):
 
-    print(f"Processing time {itime} for member {comm.rank}")
+    print(f"Processing time {itime} for {storm} for member {comm.rank}")
 
     # Get wind components
     u850 = ds.u.sel(isobaricInhPa=plevs_shear[0], time=tc_track_gribtimes['time'][itime])
@@ -181,6 +208,9 @@ for itime in range(nt_interp):
 
     # Take the mean, add to ens. member time series list
     mean_shear_imemb[itime] = shear_itime_masked
+    # print(f"Mean shear for time {itime} for member {comm.rank}: {mean_shear_imemb[itime]} m/s")
+    # if itime == 1:
+    #     sys.exit()
 
     # plt.contourf(lon2d, lat2d, shear_itime_masked, levels=np.arange(0, 30, 1), cmap='viridis')
 
@@ -195,7 +225,7 @@ mean_shear_imemb_ds = xr.DataArray(mean_shear_imemb[:,np.newaxis],
                                            'member': [comm.rank]})
 
 # Write to netCDF file
-fileout = "nepartak_shear_imemb_" + str(comm.rank) + ".nc"
+fileout = "era5ens_shear_imemb_" + str(comm.rank) + '_' + storm+".nc"
 mean_shear_imemb_ds.to_netcdf(fileout, mode='w', format='NETCDF4')
 
 print("Finished!")
