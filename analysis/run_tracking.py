@@ -139,6 +139,11 @@ if var_tag == 'slp':
 
 elif var_tag == 'avor_850-600':
 
+    # Tracking via vertically averaged AVOR from 600 to 850 hPa.
+    # 
+    # Mass-weighting is implicit on a pressure vertical grid
+    # with constant dp (as it is in this case).
+
     track_file_tag = var_tag
 
     ds = Dataset(outdir+'avo.nc')
@@ -146,7 +151,10 @@ elif var_tag == 'avor_850-600':
     ikread = np.where((pres <= 850) & (pres >=600))[0]
     avor = ds.variables['avo'][:,ikread,:,:] # 10**-5 /s
     ds.close()
-    avor = np.where((np.abs(avor) < 1e10), avor, np.nan) # Mask out bad values
+
+    # Mask out bad values
+    avor = np.where((np.abs(avor) < 1e10), avor, np.nan)
+    # Take vertical average
     var = np.nanmean(avor, axis=1)
 
 nt=np.shape(var)[0]
